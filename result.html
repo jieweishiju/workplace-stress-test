@@ -28,3 +28,475 @@
         <main class="result-main">
             <!-- 总分卡片 -->
             <div class="score-card" id="scoreCard">
+                <div class="score-main">
+                    <div class="score-circle">
+                        <svg class="score-ring" viewBox="0 0 200 200">
+                            <defs>
+                                <linearGradient id="scoreGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                    <stop offset="0%" style="stop-color:#667eea" />
+                                    <stop offset="100%" style="stop-color:#764ba2" />
+                                </linearGradient>
+                            </defs>
+                            <circle class="ring-bg" cx="100" cy="100" r="90"/>
+                            <circle class="ring-progress" id="scoreRing" cx="100" cy="100" r="90" stroke="url(#scoreGradient)"/>
+                        </svg>
+                        <div class="score-inner">
+                            <span class="score-number" id="totalScore">0</span>
+                            <span class="score-label">抗压指数</span>
+                        </div>
+                    </div>
+                    <div class="score-info">
+                        <div class="title-badge" id="titleBadge">
+                            <span class="title-emoji">🏆</span>
+                            <span class="title-text">职场铜墙铁壁</span>
+                        </div>
+                        <p class="title-desc" id="titleDesc">正在分析你的职场抗压能力...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 雷达图卡片 -->
+            <div class="radar-card" id="radarCard">
+                <h2 class="card-title">
+                    <span class="title-icon">🎯</span>
+                    三维能力分析
+                </h2>
+                <div class="radar-container">
+                    <div id="radarChart" style="width: 100%; height: 300px;"></div>
+                </div>
+            </div>
+
+            <!-- 维度详细分析 -->
+            <div class="analysis-cards" id="analysisCards">
+                <!-- 动态生成 -->
+            </div>
+
+            <!-- 小红书分享文案 -->
+            <div class="share-card" id="shareCard">
+                <h2 class="card-title">
+                    <span class="title-icon">📱</span>
+                    分享到小红书
+                </h2>
+                <div class="share-content">
+                    <div class="share-text" id="shareText">
+                        <!-- 动态生成 -->
+                    </div>
+                    <button class="copy-btn" id="copyBtn">
+                        <span class="copy-icon">📋</span>
+                        <span>一键复制文案</span>
+                    </button>
+                </div>
+                <div class="share-preview">
+                    <p class="preview-hint">复制后在小红书发布页粘贴即可</p>
+                </div>
+            </div>
+
+            <!-- 操作按钮 -->
+            <div class="action-buttons" id="actionButtons">
+                <button class="action-btn retry-btn" onclick="retakeTest()">
+                    <span class="btn-icon">🔄</span>
+                    <span>再做一次</span>
+                </button>
+                <button class="action-btn share-btn" onclick="shareToFriends()">
+                    <span class="btn-icon">💬</span>
+                    <span>分享给朋友</span>
+                </button>
+            </div>
+
+            <!-- 生成图片提示 -->
+            <div class="image-tip" id="imageTip">
+                <p>💡 长按下方图片保存，可直接分享到朋友圈或小红书</p>
+            </div>
+        </main>
+
+        <!-- 分享图片区域 -->
+        <div class="share-image-container" id="shareImageContainer">
+            <div class="share-image" id="shareImage">
+                <!-- 动态生成 -->
+            </div>
+        </div>
+
+        <footer class="result-footer">
+            <p>💼 职场抗压能力测试 | 了解自己，超越自己</p>
+            <p class="copyright">© 2024 职场抗压能力测试</p>
+        </footer>
+    </div>
+
+    <!-- Toast 提示 -->
+    <div class="toast" id="toast">
+        <span class="toast-icon">✓</span>
+        <span class="toast-text">复制成功</span>
+    </div>
+
+    <script src="assets/app.js"></script>
+    <script>
+        // ============ 结果页面逻辑 ============
+        
+        let quizResult = null;
+
+        // 页面加载
+        document.addEventListener('DOMContentLoaded', () => {
+            loadResult();
+        });
+
+        // 加载结果
+        function loadResult() {
+            const data = sessionStorage.getItem('quizResult');
+            
+            if (!data) {
+                // 没有结果数据，返回首页
+                alert('未找到测试结果，请重新测试');
+                window.location.href = 'index.html';
+                return;
+            }
+
+            quizResult = JSON.parse(data);
+            renderResult();
+        }
+
+        // 渲染结果
+        function renderResult() {
+            const result = quizResult.result;
+            
+            // 延迟动画，让用户有期待感
+            setTimeout(() => {
+                // 1. 渲染总分
+                animateScore(result.totalScore);
+                
+                // 2. 渲染称号
+                document.querySelector('.result-title').innerHTML = '你的职场抗压报告';
+                document.getElementById('titleBadge').innerHTML = `
+                    <span class="title-emoji">${result.titleEmoji}</span>
+                    <span class="title-text">${result.title}</span>
+                `;
+                document.getElementById('titleDesc').textContent = result.description;
+                
+                // 3. 渲染雷达图
+                renderRadarChart(result.dimensions);
+                
+                // 4. 渲染维度分析
+                renderAnalysis(result.dimensions);
+                
+                // 5. 渲染分享文案
+                renderShareContent(result);
+                
+                // 6. 渲染分享图片
+                renderShareImage(result);
+                
+                // 移除加载状态
+                document.querySelector('.result-title').classList.remove('loading-dots');
+                
+            }, 800);
+        }
+
+        // 动画显示分数
+        function animateScore(targetScore) {
+            const scoreEl = document.getElementById('totalScore');
+            const ringEl = document.getElementById('scoreRing');
+            
+            // 环形进度动画
+            const circumference = 2 * Math.PI * 90;
+            const offset = circumference - (targetScore / 100) * circumference;
+            
+            ringEl.style.strokeDasharray = circumference;
+            ringEl.style.strokeDashoffset = circumference;
+            
+            setTimeout(() => {
+                ringEl.style.transition = 'stroke-dashoffset 1.5s ease-out';
+                ringEl.style.strokeDashoffset = offset;
+            }, 200);
+            
+            // 数字动画
+            let current = 0;
+            const duration = 1500;
+            const step = targetScore / (duration / 16);
+            
+            const animate = () => {
+                current += step;
+                if (current < targetScore) {
+                    scoreEl.textContent = Math.round(current);
+                    requestAnimationFrame(animate);
+                } else {
+                    scoreEl.textContent = targetScore;
+                }
+            };
+            
+            setTimeout(animate, 300);
+        }
+
+        // 渲染雷达图
+        function renderRadarChart(dimensions) {
+            const chart = echarts.init(document.getElementById('radarChart'));
+            
+            const option = {
+                color: ['#667eea', '#764ba2'],
+                tooltip: {
+                    trigger: 'item',
+                    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                    borderColor: '#eee',
+                    borderWidth: 1,
+                    textStyle: {
+                        color: '#333'
+                    },
+                    formatter: function(params) {
+                        return params.name + ': ' + params.value + '分';
+                    }
+                },
+                radar: {
+                    indicator: [
+                        { name: '情绪管理', max: 100 },
+                        { name: '压力应对', max: 100 },
+                        { name: '技能应对', max: 100 }
+                    ],
+                    shape: 'polygon',
+                    splitNumber: 4,
+                    axisName: {
+                        color: '#666',
+                        fontSize: 14,
+                        fontFamily: 'Noto Sans SC'
+                    },
+                    splitLine: {
+                        lineStyle: {
+                            color: '#e0e0e0'
+                        }
+                    },
+                    splitArea: {
+                        show: true,
+                        areaStyle: {
+                            color: ['#f8f9ff', '#f0f2ff', '#e8ebff', '#dfe3ff']
+                        }
+                    },
+                    axisLine: {
+                        lineStyle: {
+                            color: '#e0e0e0'
+                        }
+                    }
+                },
+                series: [{
+                    type: 'radar',
+                    data: [{
+                        value: [dimensions['情绪管理'], dimensions['压力应对'], dimensions['技能应对']],
+                        name: '职场抗压能力',
+                        areaStyle: {
+                            color: 'rgba(102, 126, 234, 0.3)'
+                        },
+                        lineStyle: {
+                            color: '#667eea',
+                            width: 2
+                        },
+                        itemStyle: {
+                            color: '#667eea'
+                        },
+                        symbol: 'circle',
+                        symbolSize: 8
+                    }]
+                }]
+            };
+            
+            chart.setOption(option);
+            
+            // 响应式
+            window.addEventListener('resize', () => {
+                chart.resize();
+            });
+        }
+
+        // 渲染维度分析
+        function renderAnalysis(dimensions) {
+            const container = document.getElementById('analysisCards');
+            
+            const analyses = {
+                '情绪管理': {
+                    icon: '🧠',
+                    level: dimensions['情绪管理'] >= 70 ? '优秀' : dimensions['情绪管理'] >= 50 ? '良好' : '需提升',
+                    desc: dimensions['情绪管理'] >= 70 
+                        ? '你能很好地控制情绪，在高压环境下依然保持冷静。这是职场中非常稀缺的能力！'
+                        : dimensions['情绪管理'] >= 50
+                        ? '你情绪管理能力不错，但有时会被情绪左右。建议多练习冥想和情绪识别。'
+                        : '你容易被情绪牵着走，这会影响判断和决策。建议从规律作息和情绪记录开始改善。',
+                    tips: [
+                        '练习"6秒暂停法"：情绪激动时先数6秒再反应',
+                        '建立情绪日记，记录压力源和应对方式',
+                        '每天留出10分钟正念时间'
+                    ]
+                },
+                '压力应对': {
+                    icon: '💪',
+                    level: dimensions['压力应对'] >= 70 ? '优秀' : dimensions['压力应对'] >= 50 ? '良好' : '需提升',
+                    desc: dimensions['压力应对'] >= 70
+                        ? '面对压力你有一套成熟的应对机制，能主动寻找解决方案而不是逃避。'
+                        : dimensions['压力应对'] >= 50
+                        ? '你有一定的压力应对能力，但方式可能比较被动。建议更主动地管理压力。'
+                        : '你面对压力时倾向于逃避或硬扛。建议学习问题分解和优先级管理技巧。',
+                    tips: [
+                        '使用" Eisenhower Matrix"区分重要和紧急的事',
+                        '将大任务分解为可执行的小步骤',
+                        '建立压力预警信号，及时调整状态'
+                    ]
+                },
+                '技能应对': {
+                    icon: '⚡',
+                    level: dimensions['技能应对'] >= 70 ? '优秀' : dimensions['技能应对'] >= 50 ? '良好' : '需提升',
+                    desc: dimensions['技能应对'] >= 70
+                        ? '你具备扎实的职场技能储备，学习能力强，能快速适应新挑战。'
+                        : dimensions['技能应对'] >= 50
+                        ? '你的技能储备基本够用，但面对新挑战可能需要更多学习时间。'
+                        : '你的技能储备需要加强，这会影响你应对新任务的能力。',
+                    tips: [
+                        '每周预留5小时学习新技能',
+                        '建立个人知识管理系统',
+                        '主动承担有挑战性的项目来提升自己'
+                    ]
+                }
+            };
+            
+            container.innerHTML = Object.entries(analyses).map(([name, data], index) => `
+                <div class="analysis-card" style="animation-delay: ${index * 0.15}s">
+                    <div class="analysis-header">
+                        <span class="analysis-icon">${data.icon}</span>
+                        <h3 class="analysis-title">${name}</h3>
+                        <span class="analysis-score">${dimensions[name]}分</span>
+                        <span class="analysis-level level-${dimensions[name] >= 70 ? 'good' : dimensions[name] >= 50 ? 'ok' : 'warn'}">${data.level}</span>
+                    </div>
+                    <div class="analysis-bar">
+                        <div class="bar-fill" data-value="${dimensions[name]}"></div>
+                    </div>
+                    <p class="analysis-desc">${data.desc}</p>
+                    <div class="analysis-tips">
+                        <h4>💡 提升建议：</h4>
+                        <ul>
+                            ${data.tips.map(tip => `<li>${tip}</li>`).join('')}
+                        </ul>
+                    </div>
+                </div>
+            `).join('');
+            
+            // 进度条动画
+            setTimeout(() => {
+                document.querySelectorAll('.bar-fill').forEach(bar => {
+                    bar.style.width = bar.dataset.value + '%';
+                });
+            }, 500);
+        }
+
+        // 渲染分享文案
+        function renderShareContent(result) {
+            const shareTexts = [
+                `📊 又测了一个超准的职场测试！\n\n`,
+                `🏷️ 我的职场抗压指数：${result.totalScore}分\n`,
+                `${result.titleEmoji} 称号：${result.title}\n\n`,
+                `🧠 情绪管理：${result.dimensions['情绪管理']}分\n`,
+                `💪 压力应对：${result.dimensions['压力应对']}分\n`,
+                `⚡ 技能储备：${result.dimensions['技能应对']}分\n\n`,
+                `${result.description}\n\n`,
+                `👉 戳链接测试你的职场抗压能力：\n`,
+                `[链接]\n\n`,
+                `#职场干货 #抗压能力 #打工人 #自我成长 #职业发展`
+            ];
+            
+            document.getElementById('shareText').innerHTML = shareTexts.join('').replace(/\n/g, '<br>');
+            
+            // 复制功能
+            document.getElementById('copyBtn').addEventListener('click', () => {
+                const text = shareTexts.join('').replace(/<br>/g, '\n').replace(/\[链接\]/, window.location.origin);
+                copyToClipboard(text);
+            });
+        }
+
+        // 渲染分享图片
+        function renderShareImage(result) {
+            const container = document.getElementById('shareImage');
+            const bgColors = ['#667eea', '#764ba2', '#f093fb'];
+            const bgColor = bgColors[Math.floor(Math.random() * bgColors.length)];
+            
+            container.innerHTML = `
+                <div class="share-img-content" style="background: linear-gradient(135deg, ${bgColor}, #764ba2)">
+                    <div class="share-img-header">
+                        <span class="share-img-badge">💼 职场抗压能力测试</span>
+                    </div>
+                    <div class="share-img-score">
+                        <div class="share-img-score-circle">
+                            <span class="big-score">${result.totalScore}</span>
+                            <span class="score-unit">分</span>
+                        </div>
+                        <div class="share-img-title">
+                            <span class="share-img-emoji">${result.titleEmoji}</span>
+                            <span class="share-img-title-text">${result.title}</span>
+                        </div>
+                    </div>
+                    <div class="share-img-dimensions">
+                        <div class="dim-item">
+                            <span class="dim-icon">🧠</span>
+                            <span class="dim-name">情绪管理</span>
+                            <span class="dim-score">${result.dimensions['情绪管理']}</span>
+                        </div>
+                        <div class="dim-item">
+                            <span class="dim-icon">💪</span>
+                            <span class="dim-name">压力应对</span>
+                            <span class="dim-score">${result.dimensions['压力应对']}</span>
+                        </div>
+                        <div class="dim-item">
+                            <span class="dim-icon">⚡</span>
+                            <span class="dim-name">技能储备</span>
+                            <span class="dim-score">${result.dimensions['技能应对']}</span>
+                        </div>
+                    </div>
+                    <div class="share-img-footer">
+                        <span>长按保存图片 | 测测你的职场抗压指数</span>
+                    </div>
+                </div>
+            `;
+        }
+
+        // 复制到剪贴板
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                showToast('复制成功，快去分享吧！');
+            }).catch(() => {
+                // 降级方案
+                const textarea = document.createElement('textarea');
+                textarea.value = text;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                showToast('复制成功，快去分享吧！');
+            });
+        }
+
+        // 显示提示
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.querySelector('.toast-text').textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 2500);
+        }
+
+        // 返回首页
+        function goHome() {
+            window.location.href = 'index.html';
+        }
+
+        // 重新测试
+        function retakeTest() {
+            sessionStorage.removeItem('quizResult');
+            window.location.href = 'quiz.html';
+        }
+
+        // 分享给朋友
+        function shareToFriends() {
+            if (navigator.share) {
+                navigator.share({
+                    title: '职场抗压能力测试',
+                    text: `我的职场抗压指数达到${quizResult.result.totalScore}分，快来测测你的！`,
+                    url: window.location.origin
+                });
+            } else {
+                copyToClipboard(`我的职场抗压指数达到${quizResult.result.totalScore}分！${quizResult.result.titleEmoji} ${quizResult.result.title}\n\n点击链接测试你的职场抗压能力：${window.location.origin}`);
+            }
+        }
+    </script>
+</body>
+</html>

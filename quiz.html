@@ -6,9 +6,11 @@
     <title>职场抗压能力测试 - 答题中</title>
     <link rel="stylesheet" href="assets/style.css">
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
 </head>
 <body class="quiz-page">
     <div class="container">
+        <!-- 顶部进度条 -->
         <header class="quiz-header">
             <div class="header-content">
                 <div class="logo">
@@ -25,20 +27,26 @@
             </div>
         </header>
 
+        <!-- 主内容区 -->
         <main class="quiz-main">
+            <!-- 维度标签 -->
             <div class="dimension-badge" id="dimensionBadge">
                 <span class="dimension-icon">🧠</span>
                 <span class="dimension-name">情绪管理</span>
             </div>
 
+            <!-- 题目卡片 -->
             <div class="question-card-main" id="questionCard">
                 <div class="question-number-badge" id="questionNum">Q1</div>
                 <div class="scenario-container">
                     <p class="scenario-text" id="scenarioText"></p>
                 </div>
-                <div class="options-container" id="optionsContainer"></div>
+                <div class="options-container" id="optionsContainer">
+                    <!-- 选项将动态生成 -->
+                </div>
             </div>
 
+            <!-- 导航按钮 -->
             <div class="quiz-nav">
                 <button class="nav-btn prev-btn" id="prevBtn" disabled>
                     <span class="nav-icon">←</span>
@@ -54,9 +62,13 @@
                 </button>
             </div>
 
-            <div class="question-dots" id="questionDots"></div>
+            <!-- 答题进度指示器 -->
+            <div class="question-dots" id="questionDots">
+                <!-- 圆点将动态生成 -->
+            </div>
         </main>
 
+        <!-- 退出提示 -->
         <div class="exit-modal" id="exitModal">
             <div class="modal-content">
                 <h3>确定要退出测试吗？</h3>
@@ -71,11 +83,14 @@
 
     <script src="assets/app.js"></script>
     <script>
+        // ============ 测评页面逻辑 ============
+        
         let questions = [];
         let currentIndex = 0;
         let answers = {};
         let startTime = Date.now();
 
+        // 加载题目数据
         async function loadQuestions() {
             try {
                 const response = await fetch('data/questions.json');
@@ -88,56 +103,106 @@
             }
         }
 
+        // 初始化测评
         function initQuiz() {
             renderQuestion();
             renderDots();
             updateProgress();
             bindEvents();
+            
+            // 入场动画
             setTimeout(() => {
                 document.getElementById('questionCard').classList.add('animate-in');
             }, 100);
         }
 
+        // 渲染题目
         function renderQuestion() {
             const q = questions[currentIndex];
+            
+            // 更新维度标签
             const dimensionBadge = document.getElementById('dimensionBadge');
-            const dimensionIcons = { '情绪管理': '🧠', '压力应对': '💪', '技能应对': '⚡' };
-            dimensionBadge.innerHTML = '<span class="dimension-icon">' + dimensionIcons[q.dimension] + '</span><span class="dimension-name">' + q.dimension + '</span>';
-            document.getElementById('questionNum').textContent = 'Q' + (currentIndex + 1);
+            const dimensionIcons = {
+                '情绪管理': '🧠',
+                '压力应对': '💪',
+                '技能应对': '⚡'
+            };
+            dimensionBadge.innerHTML = `
+                <span class="dimension-icon">${dimensionIcons[q.dimension]}</span>
+                <span class="dimension-name">${q.dimension}</span>
+            `;
+
+            // 更新题号
+            document.getElementById('questionNum').textContent = `Q${currentIndex + 1}`;
             document.getElementById('currentNum').textContent = currentIndex + 1;
+
+            // 更新场景
             document.getElementById('scenarioText').textContent = q.scenario;
+
+            // 渲染选项
             const optionsContainer = document.getElementById('optionsContainer');
             optionsContainer.innerHTML = '';
+            
             const optionLabels = ['A', 'B', 'C', 'D'];
             q.options.forEach((opt, index) => {
                 const isSelected = answers[currentIndex] === opt.score;
                 const optionEl = document.createElement('div');
-                optionEl.className = 'option-item' + (isSelected ? ' selected' : '');
+                optionEl.className = `option-item ${isSelected ? 'selected' : ''}`;
                 optionEl.dataset.score = opt.score;
-                optionEl.innerHTML = '<span class="option-label">' + optionLabels[index] + '</span><span class="option-text">' + opt.text + '</span><span class="option-check">✓</span>';
-                optionEl.addEventListener('click', function() { selectOption(optionEl, opt.score); });
+                optionEl.innerHTML = `
+                    <span class="option-label">${optionLabels[index]}</span>
+                    <span class="option-text">${opt.text}</span>
+                    <span class="option-check">✓</span>
+                `;
+                optionEl.addEventListener('click', () => selectOption(optionEl, opt.score));
                 optionsContainer.appendChild(optionEl);
-                setTimeout(() => { optionEl.classList.add('animate-in'); }, 150 + index * 80);
+                
+                // 入场动画
+                setTimeout(() => {
+                    optionEl.classList.add('animate-in');
+                }, 150 + index * 80);
             });
+
+            // 更新导航按钮状态
             updateNavButtons();
         }
 
+        // 选择选项
         function selectOption(el, score) {
-            document.querySelectorAll('.option-item').forEach(function(item) { item.classList.remove('selected'); });
+            // 移除其他选中状态
+            document.querySelectorAll('.option-item').forEach(item => {
+                item.classList.remove('selected');
+            });
+            
+            // 添加选中状态
             el.classList.add('selected');
+            
+            // 记录答案
             answers[currentIndex] = score;
+
+            // 更新导航按钮
             updateNavButtons();
+
+            // 更新圆点状态
             updateDot(currentIndex);
+
+            // 播放选择音效反馈
             el.classList.add('pulse');
             setTimeout(() => el.classList.remove('pulse'), 200);
         }
 
+        // 更新导航按钮
         function updateNavButtons() {
             const prevBtn = document.getElementById('prevBtn');
             const nextBtn = document.getElementById('nextBtn');
             const submitBtn = document.getElementById('submitBtn');
+
+            // 上一题
             prevBtn.disabled = currentIndex === 0;
+
+            // 下一题 / 提交
             const hasAnswer = answers[currentIndex] !== undefined;
+            
             if (currentIndex === questions.length - 1) {
                 nextBtn.style.display = 'none';
                 submitBtn.style.display = 'flex';
@@ -149,97 +214,190 @@
             }
         }
 
+        // 渲染进度圆点
         function renderDots() {
             const container = document.getElementById('questionDots');
             container.innerHTML = '';
+            
             for (let i = 0; i < questions.length; i++) {
                 const dot = document.createElement('div');
                 dot.className = 'dot';
                 if (i === 0) dot.classList.add('current');
-                dot.addEventListener('click', function() { goToQuestion(i); });
+                dot.addEventListener('click', () => goToQuestion(i));
                 container.appendChild(dot);
             }
         }
 
+        // 更新单个圆点
         function updateDot(index) {
             const dots = document.querySelectorAll('.dot');
-            dots.forEach(function(dot, i) {
+            dots.forEach((dot, i) => {
                 dot.classList.remove('current', 'answered');
-                if (i === index) { dot.classList.add('current'); }
-                else if (answers[i] !== undefined) { dot.classList.add('answered'); }
+                if (i === index) {
+                    dot.classList.add('current');
+                } else if (answers[i] !== undefined) {
+                    dot.classList.add('answered');
+                }
             });
         }
 
+        // 更新进度
         function updateProgress() {
             const percent = ((currentIndex + 1) / questions.length) * 100;
-            document.getElementById('progressBar').style.width = percent + '%';
+            document.getElementById('progressBar').style.width = `${percent}%`;
             document.getElementById('percentNum').textContent = Math.round(percent);
         }
 
+        // 跳转到指定题目
         function goToQuestion(index) {
             if (index < 0 || index >= questions.length) return;
+            
             const card = document.getElementById('questionCard');
             card.classList.remove('animate-in');
+            
             currentIndex = index;
             renderQuestion();
             updateProgress();
+            
+            // 更新所有圆点状态
             const dots = document.querySelectorAll('.dot');
-            dots.forEach(function(dot, i) {
+            dots.forEach((dot, i) => {
                 dot.classList.remove('current');
                 if (i === index) dot.classList.add('current');
             });
-            setTimeout(() => { card.classList.add('animate-in'); }, 50);
+            
+            setTimeout(() => {
+                card.classList.add('animate-in');
+            }, 50);
         }
 
+        // 绑定事件
         function bindEvents() {
-            document.getElementById('prevBtn').addEventListener('click', function() { goToQuestion(currentIndex - 1); });
-            document.getElementById('nextBtn').addEventListener('click', function() { goToQuestion(currentIndex + 1); });
+            // 上一题
+            document.getElementById('prevBtn').addEventListener('click', () => {
+                goToQuestion(currentIndex - 1);
+            });
+
+            // 下一题
+            document.getElementById('nextBtn').addEventListener('click', () => {
+                goToQuestion(currentIndex + 1);
+            });
+
+            // 提交
             document.getElementById('submitBtn').addEventListener('click', submitQuiz);
-            document.getElementById('confirmExit').addEventListener('click', function() { window.location.href = 'index.html'; });
-            document.getElementById('cancelExit').addEventListener('click', function() { document.getElementById('exitModal').classList.remove('show'); });
-            window.addEventListener('beforeunload', function(e) {
-                if (Object.keys(answers).length > 0) { e.preventDefault(); e.returnValue = ''; }
+
+            // 退出确认
+            document.getElementById('confirmExit').addEventListener('click', () => {
+                window.location.href = 'index.html';
+            });
+            document.getElementById('cancelExit').addEventListener('click', () => {
+                document.getElementById('exitModal').classList.remove('show');
+            });
+
+            // 阻止意外退出
+            window.addEventListener('beforeunload', (e) => {
+                if (Object.keys(answers).length > 0) {
+                    e.preventDefault();
+                    e.returnValue = '';
+                }
             });
         }
 
-        function submitQuiz() {
+        // 提交测试
+        async function submitQuiz() {
+            // 检查是否所有题目都已回答
             const unanswered = [];
             for (let i = 0; i < questions.length; i++) {
-                if (answers[i] === undefined) { unanswered.push(i + 1); }
+                if (answers[i] === undefined) {
+                    unanswered.push(i + 1);
+                }
             }
+
             if (unanswered.length > 0) {
-                alert('还有 ' + unanswered.length + ' 道题未作答');
+                alert(`还有 ${unanswered.length} 道题未作答：第 ${unanswered.slice(0, 5).join(', ')}${unanswered.length > 5 ? '...' : ''} 题`);
                 goToQuestion(unanswered[0] - 1);
                 return;
             }
+
+            // 计算结果
             const result = calculateResult();
+            
+            // 计算用时
             const timeSpent = Math.round((Date.now() - startTime) / 1000);
-            sessionStorage.setItem('quizResult', JSON.stringify({ answers: answers, result: result, timeSpent: timeSpent }));
+            
+            // 保存结果到sessionStorage
+            sessionStorage.setItem('quizResult', JSON.stringify({
+                answers,
+                result,
+                timeSpent,
+                completedAt: new Date().toISOString()
+            }));
+
+            // 跳转到结果页
             window.location.href = 'result.html';
         }
 
+        // 计算结果
         function calculateResult() {
-            const dimensionScores = { '情绪管理': { total: 0, count: 0 }, '压力应对': { total: 0, count: 0 }, '技能应对': { total: 0, count: 0 } };
-            questions.forEach(function(q) {
+            const dimensionScores = {
+                '情绪管理': { total: 0, count: 0 },
+                '压力应对': { total: 0, count: 0 },
+                '技能应对': { total: 0, count: 0 }
+            };
+
+            questions.forEach(q => {
                 if (answers[q.id - 1] !== undefined) {
                     dimensionScores[q.dimension].total += answers[q.id - 1];
                     dimensionScores[q.dimension].count++;
                 }
             });
+
+            // 计算每个维度的平均分（满分100）
             const dimensions = {};
             for (const [name, data] of Object.entries(dimensionScores)) {
                 dimensions[name] = Math.round((data.total / (data.count * 4)) * 100);
             }
-            const totalScore = Math.round((dimensions['情绪管理'] + dimensions['压力应对'] + dimensions['技能应对']) / 3);
+
+            // 计算总分
+            const totalScore = Math.round(
+                Object.values(dimensions).reduce((a, b) => a + b, 0) / 3
+            );
+
+            // 确定等级称号
             let title, titleEmoji, description;
-            if (totalScore >= 85) { title = '职场铜墙铁壁'; titleEmoji = '🏆'; description = '你的抗压能力堪称教科书级别！'; }
-            else if (totalScore >= 70) { title = '压力太极大师'; titleEmoji = '🥋'; description = '你深谙以柔克刚之道。'; }
-            else if (totalScore >= 55) { title = '弹性职场人'; titleEmoji = '🎾'; description = '你有不错的抗压基础。'; }
-            else if (totalScore >= 40) { title = '需要充电的打工人'; titleEmoji = '🔋'; description = '是时候学几招抗压秘籍了！'; }
-            else { title = '职场小嫩芽'; titleEmoji = '🌱'; description = '这也是成长的一部分！'; }
-            return { dimensions: dimensions, totalScore: totalScore, title: title, titleEmoji: titleEmoji, description: description };
+            
+            if (totalScore >= 85) {
+                title = '职场铜墙铁壁';
+                titleEmoji = '🏆';
+                description = '你的抗压能力堪称教科书级别！无论是多大的压力，你都能泰山崩于前而色不变。';
+            } else if (totalScore >= 70) {
+                title = '压力太极大师';
+                titleEmoji = '🥋';
+                description = '你深谙以柔克刚之道，压力在你面前只能绕道走。';
+            } else if (totalScore >= 55) {
+                title = '弹性职场人';
+                titleEmoji = '🎾';
+                description = '你有不错的抗压基础，偶尔会有波动，但总体能hold住职场风云。';
+            } else if (totalScore >= 40) {
+                title = '需要充电的打工人';
+                titleEmoji = '🔋';
+                description = '职场压力对你来说还是有些吃力，是时候学几招抗压秘籍了！';
+            } else {
+                title = '职场小嫩芽';
+                titleEmoji = '🌱';
+                description = '职场对你来说充满挑战，别担心，这也是成长的一部分！';
+            }
+
+            return {
+                dimensions,
+                totalScore,
+                title,
+                titleEmoji,
+                description
+            };
         }
 
+        // 启动
         loadQuestions();
     </script>
 </body>

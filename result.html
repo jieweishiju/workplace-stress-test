@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>测试结果 - 职场抗压能力报告</title>
+    <link rel="stylesheet" href="assets/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <meta name="description" content="你的职场抗压能力分析报告，了解自己的抗压指数和提升方向">
+    <meta property="og:title" content="我的职场抗压指数报告">
+    <meta property="og:description" content="测试我的职场抗压能力，了解三大维度的表现">
+</head>
+<body class="result-page">
+    <div class="container">
+        <!-- 头部 -->
+        <header class="result-header">
+            <div class="header-top">
+                <span class="back-btn" onclick="goHome()">← 返回首页</span>
+            </div>
+            <div class="header-content">
+                <div class="result-badge">📊 你的职场抗压报告</div>
+                <h1 class="result-title">生成中<span class="loading-dots">...</span></h1>
+            </div>
+        </header>
+
+        <!-- 主要结果卡片 -->
+        <main class="result-main">
+            <!-- 总分卡片 -->
+            <div class="score-card" id="scoreCard">

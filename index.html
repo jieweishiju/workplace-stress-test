@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>职场抗压能力测试 - 你是哪种职场弹簧人？</title>
+    <link rel="stylesheet" href="assets/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <!-- 背景装饰 -->
+        <div class="bg-decoration">
+            <div class="floating-shape shape-1"></div>
+            <div class="floating-shape shape-2"></div>
+            <div class="floating-shape shape-3"></div>
+            <div class="floating-shape shape-4"></div>
+        </div>
+
+        <!-- 主内容区 -->
+        <main class="hero-section">
+            <div class="badge">
+                <span class="badge-icon">🔥</span>
+                <span class="badge-text">职场人必测</span>
+            </div>
+
+            <h1 class="main-title">
+                <span class="title-line">你是哪种</span>
+                <span class="title-highlight">职场弹簧人</span>
+                <span class="title-line">？</span>
+            </h1>
+
+            <p class="subtitle">
+                测测你的职场抗压能力指数<br>
+                <span class="highlight-text">3大维度 × 20道灵魂拷问</span>
+            </p>
+
+            <div class="features">
+                <div class="feature-item">
+                    <span class="feature-icon">🧠</span>
+                    <span>情绪管理</span>
+                </div>
+                <div class="feature-divider">+</div>
+                <div class="feature-item">
+                    <span class="feature-icon">💪</span>
+                    <span>压力应对</span>
+                </div>
+                <div class="feature-divider">+</div>
+                <div class="feature-item">
+                    <span class="feature-icon">⚡</span>
+                    <span>技能储备</span>
+                </div>
+            </div>
+
+            <!-- 密码验证区域 -->
+            <div class="password-section">
+                <div class="password-box">
+                    <h3 class="password-title">🔑 输入访问码开始测试</h3>
+                    <div class="password-input-group">
+                        <input type="text" id="accessCode" placeholder="格式: WQ-XXXX-XXXX" maxlength="12" autocomplete="off">
+                        <button id="verifyBtn" class="verify-btn">
+                            <span class="btn-text">开始测试</span>
+                            <span class="btn-icon">→</span>
+                        </button>
+                    </div>
+                    <p class="password-hint">输入你获得的专属访问码</p>
+                    <p id="errorMsg" class="error-message"></p>
+                </div>
+            </div>
+
+            <!-- 统计信息 -->
+            <div class="stats-bar">
+                <div class="stat-item">
+                    <span class="stat-number">10,000+</span>
+                    <span class="stat-label">人已测试</span>
+                </div>
+                <div class="stat-divider"></div>
+                <div class="stat-item">
+                    <span class="stat-number">4.8</span>
+                    <span class="stat-label">平均评分</span>
+                </div>
+                <div class="stat-divider"></div>
+                <div class="stat-item">
+                    <span class="stat-number">3min</span>
+                    <span class="stat-label">完成时间</span>
+                </div>
+            </div>
+        </main>
+
+        <!-- 预览区 -->
+        <section class="preview-section">
+            <h2 class="preview-title">📋 测试维度预览</h2>
+            <div class="dimension-cards">
+                <div class="dimension-card">
+                    <div class="card-icon">🧠</div>
+                    <h3>情绪管理</h3>
+                    <p>面对领导的批评、客户的刁难，你还能保持微笑吗？</p>
+                </div>
+                <div class="dimension-card">
+                    <div class="card-icon">💪</div>
+                    <h3>压力应对</h3>
+                    <p>Deadline提前、KPI翻倍，你的应对策略是什么？</p>
+                </div>
+                <div class="dimension-card">
+                    <div class="card-icon">⚡</div>
+                    <h3>技能储备</h3>
+                    <p>新任务、新技术、新挑战，你的武器库够用吗？</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 题目标题预览 -->
+        <section class="question-preview">
+            <h2 class="preview-title">😱 灵魂拷问示例</h2>
+            <div class="question-card">
+                <div class="question-number">Q1</div>
+                <div class="question-content">
+                    <p>周一早上8:55，你踩点到公司，打开邮箱发现躺着你周末做梦都在怕的——58封未读邮件。你会：</p>
+                </div>
+                <div class="question-options-preview">
+                    <span>A. 先泡杯咖啡，深呼吸，列个清单按重要性处理</span>
+                    <span>B. 快速浏览，心里默念"问题不大"</span>
+                    <span>C. 关掉邮箱，先去茶水间缓一缓</span>
+                    <span>D. 深吸一口气……然后关掉电脑</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- 底部信息 -->
+        <footer class="footer">
+            <p>💡 精选20道真实职场场景题 | 生成专属雷达图分析</p>
+            <p class="copyright">© 2024 职场抗压能力测试 | 了解自己，超越自己</p>
+        </footer>
+    </div>
+
+    <script src="assets/app.js"></script>
+    <script>
+        // 页面加载动画
+        document.addEventListener('DOMContentLoaded', () => {
+            document.body.classList.add('loaded');
+        });
+
+        // 密码验证
+        document.getElementById('verifyBtn').addEventListener('click', verifyCode);
+        document.getElementById('accessCode').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') verifyCode();
+        });
+
+        async function verifyCode() {
+            const code = document.getElementById('accessCode').value.trim().toUpperCase();
+            const errorMsg = document.getElementById('errorMsg');
+            const btn = document.getElementById('verifyBtn');
+
+            if (!code) {
+                errorMsg.textContent = '请输入访问码';
+                return;
+            }
+
+            // 格式化验证
+            const formatRegex = /^WQ-[A-Z0-9]{4}-[A-Z0-9]{4}$/;
+            if (!formatRegex.test(code)) {
+                errorMsg.textContent = '访问码格式错误，例：WQ-AB12-CD34';
+                return;
+            }
+
+            btn.classList.add('loading');
+            btn.disabled = true;
+
+            try {
+                const response = await fetch('api/verify.js', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ code })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    sessionStorage.setItem('accessCode', code);
+                    window.location.href = 'quiz.html';
+                } else {
+                    errorMsg.textContent = result.message || '访问码无效或已使用';
+                    btn.classList.remove('loading');
+                    btn.disabled = false;
+                }
+            } catch (error) {
+                // 开发环境下的离线模式
+                console.log('API unavailable, using local verification');
+                
+                try {
+                    const res = await fetch('data/codes.json');
+                    const data = await res.json();
+                    
+                    if (data.codes.includes(code) && !data.used_codes.includes(code)) {
+                        sessionStorage.setItem('accessCode', code);
+                        sessionStorage.setItem('usedCodes', JSON.stringify([...data.used_codes, code]));
+                        window.location.href = 'quiz.html';
+                    } else if (data.used_codes.includes(code)) {
+                        errorMsg.textContent = '该访问码已被使用';
+                    } else {
+                        errorMsg.textContent = '访问码无效';
+                    }
+                } catch (e) {
+                    errorMsg.textContent = '验证服务暂时不可用，请稍后重试';
+                }
+                
+                btn.classList.remove('loading');
+                btn.disabled = false;
+            }
+        }
+
+        // 输入框格式化
+        document.getElementById('accessCode').addEventListener('input', function(e) {
+            let value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+            
+            if (value.length > 2) {
+                value = value.substring(0, 2) + '-' + value.substring(2);
+            }
+            if (value.length > 7) {
+                value = value.substring(0, 7) + '-' + value.substring(7);
+            }
+            if (value.length > 12) {
+                value = value.substring(0, 12);
+            }
+            
+            e.target.value = value;
+        });
+    </script>
+</body>
+</html>

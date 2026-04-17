@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>职场抗压能力测试 - 答题中</title>
+    <link rel="stylesheet" href="assets/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+</head>
+<body class="quiz-page">
+    <div class="container">
+        <!-- 顶部进度条 -->
+        <header class="quiz-header">
+            <div class="header-content">
+                <div class="logo">
+                    <span class="logo-icon">💼</span>
+                    <span class="logo-text">职场抗压测试</span>
+                </div>
+                <div class="progress-info">
+                    <span class="current-question">第 <strong id="currentNum">1</strong> / 20 题</span>
+                    <span class="progress-percent"><strong id="percentNum">5</strong>%</span>
+                </div>
+            </div>
+            <div class="progress-bar-container">
+                <div class="progress-bar" id="progressBar"></div>
+            </div>
+        </header>
+
+        <!-- 主内容区 -->
+        <main class="quiz-main">
+            <!-- 维度标签 -->
+            <div class="dimension-badge" id="dimensionBadge">
+                <span class="dimension-icon">🧠</span>
+                <span class="dimension-name">情绪管理</span>
+            </div>
+
+            <!-- 题目卡片 -->
+            <div class="question-card-main" id="questionCard">
+                <div class="question-number-badge" id="questionNum">Q1</div>
+                <div class="scenario-container">
+                    <p class="scenario-text" id="scenarioText"></p>
+                </div>
+                <div class="options-container" id="optionsContainer">
+                    <!-- 选项将动态生成 -->
+                </div>
+            </div>
+
+            <!-- 导航按钮 -->
+            <div class="quiz-nav">
+                <button class="nav-btn prev-btn" id="prevBtn" disabled>
+                    <span class="nav-icon">←</span>
+                    <span>上一题</span>
+                </button>
+                <button class="nav-btn next-btn" id="nextBtn" disabled>
+                    <span>下一题</span>
+                    <span class="nav-icon">→</span>
+                </button>
+                <button class="nav-btn submit-btn" id="submitBtn" style="display: none;">
+                    <span>查看结果</span>
+                    <span class="nav-icon">✨</span>
+                </button>
+            </div>
+
+            <!-- 答题进度指示器 -->
+            <div class="question-dots" id="questionDots">
+                <!-- 圆点将动态生成 -->
+            </div>
+        </main>
+
+        <!-- 退出提示 -->
+        <div class="exit-modal" id="exitModal">
+            <div class="modal-content">
+                <h3>确定要退出测试吗？</h3>
+                <p>你的答题进度将会丢失</p>
+                <div class="modal-buttons">
+                    <button class="modal-btn cancel" id="cancelExit">继续答题</button>
+                    <button class="modal-btn confirm" id="confirmExit">退出测试</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="assets/app.js"></script>
+    <script>
+        // ============ 测评页面逻辑 ============
+        
+        let questions = [];
+        let currentIndex = 0;
+        let answers = {};
+        let startTime = Date.now();
+
+        // 加载题目数据
+        async function loadQuestions() {
+            try {
+                const response = await fetch('data/questions.json');
+                const data = await response.json();
+                questions = data.questions;
+                initQuiz();
+            } catch (error) {
+                console.error('加载题目失败:', error);
+                alert('加载题目失败，请刷新重试');
+            }
+        }
+
+        // 初始化测评
+        function initQuiz() {
+            renderQuestion();
+            renderDots();
+            updateProgress();
+            bindEvents();
+            
+            setTimeout(() => {
+                document.getElementById('questionCard').classList.add('animate-in');
+            }, 100);
+        }
+
+        // 渲染题目
+        function renderQuestion() {
+            const q = questions[currentIndex];
+            
+            const dimensionBadge = document.getElementById('dimensionBadge');
+            const dimensionIcons = {
+                '情绪管理': '🧠',
+                '压力应对': '💪',
+                '技能应对': '⚡'
+            };
+            dimensionBadge.innerHTML = `
+                <span class="dimension-icon">${dimensionIcons[q.dimension]}</span>
+                <span class="dimension-name">${q.dimension}</span>
+            `;
+
+            document.getElementById('questionNum').textContent = `Q${currentIndex + 1}`;
+            document.getElementById('currentNum').textContent = currentIndex + 1;
+
+            document.getElementById('scenarioText').textContent = q.scenario;
+
+            const optionsContainer = document.getElementById('optionsContainer');
+            optionsContainer.innerHTML = '';
+            
+            const optionLabels = ['A', 'B', 'C', 'D'];
+            q.options.forEach((opt, index) => {
+                const isSelected = answers[currentIndex] === opt.score;
+                const optionEl = document.createElement('div');
+                optionEl.className = `option-item ${isSelected ? 'selected' : ''}`;
+                optionEl.dataset.score = opt.score;
+                optionEl.innerHTML = `
+                    <span class="option-label">${optionLabels[index]}</span>
+                    <span class="option-text">${opt.text}</span>
+                    <span class="option-check">✓</span>
+                `;
+                optionEl.addEventListener

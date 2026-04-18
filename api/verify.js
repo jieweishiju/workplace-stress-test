@@ -1,96 +1,102 @@
 /**
  * 密码验证 API (Vercel Serverless Function)
- * 
- * 使用方式:
- * POST /api/verify
- * Body: { "code": "WQ-XXXX-XXXX" }
- * 
- * 返回:
- * { success: true } - 验证成功
- * { success: false, message: "错误信息" } - 验证失败
  */
 
-// 存储已使用的密码（在实际部署中应该使用数据库）
-let usedCodes = new Set();
+// 有效密码列表
+const validCodes = new Set([
+    "WQ-27R9-D5CL", "WQ-2EWS-Z4NF", "WQ-2G6T-PHFM", "WQ-2R7F-BSKT",
+    "WQ-3D35-Q9K6", "WQ-3YVW-RQNW", "WQ-4KAZ-QGZ2", "WQ-4KN6-F8FH",
+    "WQ-4L39-8G7W", "WQ-4VNP-HEWV", "WQ-53MQ-7CGN", "WQ-5DEA-R9GB",
+    "WQ-5JBL-CP9T", "WQ-5T2S-8QWQ", "WQ-6PAX-ZE4X", "WQ-6YXG-T5EN",
+    "WQ-7H5D-5HTL", "WQ-7MCD-L4V9", "WQ-7UMA-ABQJ", "WQ-7Y8W-SVUK",
+    "WQ-7YTQ-TQLA", "WQ-88VJ-XA4K", "WQ-A4K4-DAUS", "WQ-AC8M-GXAX",
+    "WQ-BEQD-44NA", "WQ-BY7A-FJ5H", "WQ-C2UQ-FR7E", "WQ-C2ZB-QAVD",
+    "WQ-CJLA-L3PN", "WQ-CLPN-F2KN", "WQ-DLEL-KRFH", "WQ-DVWW-PKEM",
+    "WQ-E5E7-AG9F", "WQ-EDBA-E5NC", "WQ-EKQE-GKJG", "WQ-EX9E-T5Y3",
+    "WQ-FKJN-7SLL", "WQ-FL7Z-TQCP", "WQ-FUP9-6UYV", "WQ-J5AY-868F",
+    "WQ-J9Y7-LQ32", "WQ-JU23-TU5J", "WQ-K53R-VN8L", "WQ-K74T-EWCE",
+    "WQ-K99H-4EA4", "WQ-K9Q4-LD3D", "WQ-KF86-5JTA", "WQ-KJZ2-5Z8V",
+    "WQ-KUWN-CTD4", "WQ-KVWK-YADK", "WQ-KWUP-9Y3W", "WQ-L3WZ-GHWT",
+    "WQ-LJ9D-EP82", "WQ-LM5C-SMUQ", "WQ-M4WF-KMLY", "WQ-M555-2G7N",
+    "WQ-MSLN-DSFE", "WQ-MTTR-ZEPF", "WQ-NMR8-AJ49", "WQ-NWGP-J5FG",
+    "WQ-NY8Q-9SYK", "WQ-PPRX-6ZTL", "WQ-PPVE-5DKQ", "WQ-PVHZ-2H7P",
+    "WQ-QCTX-TTNB", "WQ-R2B4-5WBM", "WQ-RD75-KEZU", "WQ-RFAT-8GKL",
+    "WQ-RL9C-2QFB", "WQ-RLVM-V3DT", "WQ-RSSR-FFGH", "WQ-RYAE-XZRV",
+    "WQ-THPJ-EQ6D", "WQ-TUMK-N94M", "WQ-TW2E-HJ5Q", "WQ-U68Z-PFZF",
+    "WQ-UBFN-SU3A", "WQ-ULEF-GM5H", "WQ-UNCS-6PD3", "WQ-V39K-27D2",
+    "WQ-V59L-ATF5", "WQ-VLK5-MMV7", "WQ-WDLV-PRKQ", "WQ-WNWQ-364C",
+    "WQ-WYPW-6JCY", "WQ-XGY2-X5MJ", "WQ-XGZA-F78J", "WQ-XLC3-GC5T",
+    "WQ-XSQJ-78UU", "WQ-XYLD-YAZ4", "WQ-XYNE-4PW6", "WQ-YBMB-9PMG",
+    "WQ-YCSR-Z4W6", "WQ-YEVT-Q99Q", "WQ-YFZC-KLSE", "WQ-YSSM-TM46",
+    "WQ-YSZ4-QM7Q", "WQ-Z8LZ-LWKK", "WQ-ZJXQ-MPNK", "WQ-ZKZQ-F4S3"
+]);
 
-// CORS 头
-const corsHeaders = {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': 'Content-Type',
-    'Access-Control-Allow-Methods': 'POST, OPTIONS'
-};
+// 已使用的密码（内存存储，部署后会清空）
+const usedCodes = new Set();
 
-module.exports = async (req, res) => {
-    // 处理 CORS preflight
+export default async function handler(req, res) {
+    // 设置 CORS
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+    // 处理预检请求
     if (req.method === 'OPTIONS') {
-        res.status(200).set(corsHeaders).send('');
-        return;
+        return res.status(200).end();
     }
 
-    // 只允许 POST
+    // 只接受 POST
     if (req.method !== 'POST') {
-        res.status(405).json({ 
-            success: false, 
-            message: '只支持 POST 请求' 
-        });
-        return;
+        return res.status(405).json({ success: false, message: '方法不允许' });
     }
 
     try {
         const { code } = req.body;
+        
+        if (!code) {
+            return res.status(400).json({ success: false, message: '请输入访问码' });
+        }
+
+        const normalizedCode = code.toUpperCase().trim();
 
         // 验证格式
         const formatRegex = /^WQ-[A-Z0-9]{4}-[A-Z0-9]{4}$/;
-        if (!code || !formatRegex.test(code.toUpperCase())) {
-            res.status(400).json({
-                success: false,
-                message: '访问码格式错误，例：WQ-AB12-CD34'
+        if (!formatRegex.test(normalizedCode)) {
+            return res.status(400).json({ 
+                success: false, 
+                message: '访问码格式错误，例：WQ-AB12-CD34' 
             });
-            return;
         }
 
-        const normalizedCode = code.toUpperCase();
-
-        // 检查是否已使用（实际环境应该查询数据库）
+        // 检查是否已使用
         if (usedCodes.has(normalizedCode)) {
-            res.status(400).json({
-                success: false,
-                message: '该访问码已被使用'
+            return res.status(400).json({ 
+                success: false, 
+                message: '该访问码已被使用' 
             });
-            return;
         }
 
-        // 验证密码池（示例，实际环境应该从数据库读取）
-        const validCodes = [
-            'WQ-AF23-XK91', 'WQ-BK78-PL34', 'WQ-CM45-QR89', 'WQ-DN12-ST67', 'WQ-EP56-UV23',
-            'WQ-FQ89-WX45', 'WQ-GR34-YZ12', 'WQ-HS67-AB78', 'WQ-IT90-CD34', 'WQ-JU56-EF12',
-            'WQ-KV23-GH89', 'WQ-LW78-IJ45', 'WQ-MX12-KL67', 'WQ-NY45-MN23', 'WQ-OP89-QR56',
-            'WQ-PQ23-RS90', 'WQ-RT78-ST12', 'WQ-SU34-UV67', 'WQ-UV89-WX45', 'WQ-WX12-XY78',
-            'WQ-XY56-ZA34', 'WQ-ZB90-AC12', 'WQ-AC67-DE45', 'WQ-DF23-FG89', 'WQ-GH78-HI34'
-        ];
-
-        if (!validCodes.includes(normalizedCode)) {
-            res.status(400).json({
-                success: false,
-                message: '访问码无效'
+        // 检查是否有效
+        if (!validCodes.has(normalizedCode)) {
+            return res.status(400).json({ 
+                success: false, 
+                message: '访问码无效' 
             });
-            return;
         }
 
         // 标记为已使用
         usedCodes.add(normalizedCode);
 
-        // 返回成功
-        res.status(200).json({
-            success: true,
-            message: '验证成功'
+        return res.status(200).json({ 
+            success: true, 
+            message: '验证成功' 
         });
 
     } catch (error) {
         console.error('验证错误:', error);
-        res.status(500).json({
-            success: false,
-            message: '服务器内部错误'
+        return res.status(500).json({ 
+            success: false, 
+            message: '服务器错误，请稍后重试' 
         });
     }
-};
+}

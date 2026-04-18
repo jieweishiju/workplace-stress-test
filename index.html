@@ -167,7 +167,7 @@
             btn.disabled = true;
 
             try {
-                const response = await fetch('api/verify.js', {
+                const response = await fetch('/api/verify', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ code })
@@ -176,7 +176,9 @@
                 const result = await response.json();
 
                 if (result.success) {
+                    // 存储到sessionStorage
                     sessionStorage.setItem('accessCode', code);
+                    // 跳转到测试页面
                     window.location.href = 'quiz.html';
                 } else {
                     errorMsg.textContent = result.message || '访问码无效或已使用';
@@ -187,6 +189,7 @@
                 // 开发环境下的离线模式
                 console.log('API unavailable, using local verification');
                 
+                // 从codes.json读取验证
                 try {
                     const res = await fetch('data/codes.json');
                     const data = await res.json();
@@ -213,6 +216,7 @@
         document.getElementById('accessCode').addEventListener('input', function(e) {
             let value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
             
+            // 格式化 WQ-XXXX-XXXX
             if (value.length > 2) {
                 value = value.substring(0, 2) + '-' + value.substring(2);
             }
